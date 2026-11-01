@@ -178,6 +178,30 @@ def chips(c, t):
     return "".join(out)
 
 
+def faq_block(items):
+    """Вопросы-ответы: HTML для страницы и JSON-LD FAQPage для <head>."""
+    body = "".join(f"<details><summary>{esc(q)}</summary><p>{esc(a)}</p></details>" for q, a in items)
+    ld = json.dumps({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+        {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in items]},
+        ensure_ascii=False)
+    return body, f'<script type="application/ld+json">{ld}</script>'
+
+
+def has_cx(c):
+    """Страница «монета на бирже» есть, только если монета торгуется на 2+ биржах — иначе она дублирует страницу монеты."""
+    return len(c["markets"]) >= 2
+
+
+def cx_path(c, ex):
+    return f"coin/{c['base']}/{ex}.html"
+
+
+def apr_list(c, key):
+    """«OKX +12.3%, Gate +8.1%» — биржи монеты по убыванию метрики."""
+    ms = sorted((m for m in c["markets"].values() if m[key] is not None), key=lambda m: -m[key])
+    return ", ".join(f"{EX_NAME[m['exchange']]} {m[key]:+.1f}%" for m in ms)
+
+
 class Page:
     """Одна страница в одной языковой версии: знает свой путь и строит относительные ссылки."""
 
@@ -257,11 +281,7 @@ def index_page(lang, coins, updated):
             f'<td data-v="{c["best_apr_7d"] if c["best_apr_7d"] is not None else -99999:.3f}">{best}</td>{cells}'
             f'<td data-v="{c["turnover"]:.0f}">{money(c["turnover"], t)}</td></tr>')
 
-    faq = FAQ[lang]
-    faq_html = "".join(f"<details><summary>{esc(q)}</summary><p>{esc(a)}</p></details>" for q, a in faq)
-    faq_ld = json.dumps({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
-        {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faq]},
-        ensure_ascii=False)
+    faq_html, faq_head = faq_block(FAQ[lang])
 
     body = f"""
 <h1>{t['index_h1']}</h1>
@@ -286,8 +306,7 @@ def index_page(lang, coins, updated):
 <div class="exlinks">{exchange_buttons(t)}</div>
 <h2>{t['faq_h2']}</h2>{faq_html}
 """
-    return p, p.render(t["index_title"].format(n=len(coins)), t["index_desc"], body, updated,
-                       f'<script type="application/ld+json">{faq_ld}</script>')
+    return p, p.render(t["index_title"].format(n=len(coins)), t["index_desc"], body, updated, faq_head)
 
 
 def exchange_page(lang, ex, coins, updated):
@@ -298,7 +317,8 @@ def exchange_page(lang, ex, coins, updated):
     for c in listed:
         m = c["markets"][ex]
         rows.append(
-            f'<tr><td><a href="{p.link(f"coin/{c["base"]}.html")}">{esc(c["base"])}</a>{chips(c, t)}</td>'
+            f'<tr><td><a href="{p.link(cx_path(c, ex) if has_cx(c) else f"coin/{c["base"]}.html")}">{esc(c["base"])}</a>'
+            f'{chips(c, t)}</td>'
             f'<td data-v="{m["apr_now"]:.3f}">{pct(m["apr_now"])}</td>'
             f'<td data-v="{m["apr_7d"]:.3f}">{pct(m["apr_7d"])}</td>'
             f'<td data-v="{m["apr_30d"] or 0:.3f}">{pct(m["apr_30d"])}</td>'
@@ -387,7 +407,7 @@ def coin_page(lang, c, updated):
             continue
         x = m[e]
         rows.append(
-            f'<tr><td><a href="{p.link(f"exchange/{e}.html")}">{EX_NAME[e]}</a></td>'
+            f'<tr><td><a href="{p.link(cx_path(c, e) if has_cx(c) else f"exchange/{e}.html")}">{EX_NAME[e]}</a></td>'
             f'<td data-v="{x["apr_now"]:.3f}">{pct(x["apr_now"])}</td><td data-v="{x["apr_7d"]:.3f}">{pct(x["apr_7d"])}</td>'
             f'<td data-v="{x["apr_30d"] or 0:.3f}">{pct(x["apr_30d"])}</td>'
             f'<td data-v="{x["neg_share"] or 0:.1f}">{x["neg_share"] or 0:.0f}%</td>'
@@ -416,6 +436,13 @@ document.getElementById('fees').textContent='$'+(pos*{FEES_ROUND_TRIP}).toFixed(
     series = {e: daily_apr(m[e]["history"]) for e in EXCHANGES if e in m}
     legend = "".join(f'<span><i style="background:var(--c-{e})"></i>{EX_NAME[e]}</span>' for e in EXCHANGES if e in m)
     spread = c["spread"]
+    faq_html, faq_head = "", ""
+    if has_cx(c):
+        faq_html, faq_head = faq_block([
+            (t["q_cmp"].format(b=c["base"]), t["a_cmp"].format(list=apr_list(c, "apr_7d"))),
+            (t["q_avg"].format(b=c["base"]), t["a_avg"].format(list=apr_list(c, "apr_30d"))),
+        ])
+        faq_html = f"<h2>{t['faq_h2']}</h2>{faq_html}"
     body = f"""
 <h1>{t['coin_h1'].format(b=b)}</h1>
 <p class="lead">{esc(coin_text(c, t))}</p>
@@ -436,12 +463,69 @@ document.getElementById('fees').textContent='$'+(pos*{FEES_ROUND_TRIP}).toFixed(
 <h2>{t['chart_h2']}</h2>
 <div class="chart">{chart_svg(series)}<div class="legend">{legend}</div></div>
 {calc}
+{faq_html}
 <p style="margin-top:24px"><a href="{p.link('guide.html')}">{t['guide_link']}</a> · <a href="{p.link('index.html')}">{t['back']}</a></p>
 """
     apr = f"{c['best_apr_7d']:+.1f}%" if c["best"] else f"{liquid['apr_7d']:+.1f}%"
     ex = EX_NAME[c["best"] or liquid["exchange"]]
     return p, p.render(t["coin_title"].format(b=c["base"], apr=apr), t["coin_desc"].format(b=c["base"], apr=apr, ex=ex),
-                       body, updated)
+                       body, updated, faq_head)
+
+
+def coin_exchange_page(lang, c, ex, updated):
+    """Монета на одной бирже: под запросы вида «BTC funding rate OKX»."""
+    p = Page(lang, cx_path(c, ex))
+    t, b, m, name = p.t, c["base"], c["markets"][ex], EX_NAME[ex]
+    f = lambda v: f"{v:+.1f}%" if v is not None else "—"
+    nums = dict(b=b, ex=name, h=f"{m['interval_h']:g}", rate=f"{m['rate'] * 100:+.4f}%", now=f(m["apr_now"]),
+                d7=f(m["apr_7d"]), d30=f(m["apr_30d"]), neg=f"{m['neg_share'] or 0:.0f}")
+
+    days = {d: a for d, a in daily_apr(m["history"]).items() if d < updated // 86400}  # без неполного сегодняшнего дня
+    fmt = lambda d: datetime.fromtimestamp(d * 86400, timezone.utc).strftime("%Y-%m-%d")
+    hist_rows = "".join(f'<tr><td>{fmt(d)}</td><td data-v="{a / 365:.4f}">{pct(a / 365, 3)}</td>'
+                        f'<td data-v="{a:.3f}">{pct(a)}</td></tr>' for d, a in sorted(days.items(), reverse=True)[:14])
+
+    others = "".join(
+        f'<a class="card" href="{p.link(cx_path(c, e))}"><div class="k">{EX_NAME[e]}</div>'
+        f'<div class="v">{pct(c["markets"][e]["apr_7d"])}</div><div class="k">{t["card_sub"].format(ex=EX_NAME[e])}</div></a>'
+        for e in EXCHANGES if e in c["markets"] and e != ex)
+
+    hedge = (t["cx_spot"] if m["spot"] else t["cx_nospot"]).format(b=b, ex=name)
+    faq_html, faq_head = faq_block([
+        (t["q_now"].format(b=b, ex=name), t["a_now"].format(**nums)),
+        (t["q_cmp"].format(b=b), t["a_cmp"].format(list=apr_list(c, "apr_7d"))),
+        (t["q_hedge"].format(b=b, ex=name), hedge),
+    ])
+
+    body = f"""
+<p class="muted" style="margin:20px 0 0"><a href="{p.link('index.html')}">{t['nav_rates']}</a> ›
+<a href="{p.link(f'coin/{b}.html')}">{esc(b)}</a> › {name}</p>
+<h1 style="margin-top:8px">{t['cx_h1'].format(b=esc(b), ex=name)}</h1>
+<p class="lead">{esc(t['cx_lead'].format(**nums))}</p>
+{f'<div class="note">{t["risk_note"]}</div>' if risky(c) else ''}
+<div class="cards">
+<div class="card"><div class="k">{t['cx_card_rate']}</div><div class="v">{pct(m['rate'] * 100, 4)}</div>
+<div class="k">{t['col_interval']}: {m['interval_h']:g} {t['hours']}</div></div>
+<div class="card"><div class="k">{t['cx_card_now']}</div><div class="v">{pct(m['apr_now'])}</div></div>
+<div class="card"><div class="k">{t['col_7d']}</div><div class="v">{pct(m['apr_7d'])}</div></div>
+<div class="card"><div class="k">{t['col_30d']}</div><div class="v">{pct(m['apr_30d'])}</div></div>
+</div>
+<p>{esc(hedge)}</p>
+<p><a class="cta" href="{esc(ref(ex, m['url']))}" rel="sponsored noopener" target="_blank">{t['trade']} {esc(b)} — {name}</a></p>
+<h2>{t['chart_h2']}</h2>
+<div class="chart">{chart_svg({ex: days})}</div>
+<h2>{t['cx_hist_h2'].format(b=esc(b), ex=name)}</h2>
+<div class="tablebox"><table data-sortable><thead><tr><th aria-sort="descending">{t['col_date']}</th>
+<th>{t['col_day_sum']}</th><th>{t['col_apr']}</th></tr></thead><tbody>{hist_rows}</tbody></table></div>
+<h2>{t['cx_other_h2'].format(b=esc(b))}</h2>
+<div class="cards">{others}</div>
+<p><a href="{p.link(f'coin/{b}.html')}">{t['cx_compare']} →</a></p>
+<h2>{t['faq_h2']}</h2>{faq_html}
+<p style="margin-top:24px"><a href="{p.link(f'exchange/{ex}.html')}">{t['ex_h1'].format(ex=name)}</a> ·
+<a href="{p.link('guide.html')}">{t['guide_link']}</a></p>
+"""
+    return p, p.render(t["cx_title"].format(b=b, ex=name, apr=nums["d7"]), t["cx_desc"].format(**nums), body, updated,
+                       faq_head)
 
 
 def guide_page(lang, updated):
@@ -487,6 +571,7 @@ def main():
         pages.append(guide_page(lang, updated))
         pages += [exchange_page(lang, ex, coins, updated) for ex in EXCHANGES]
         pages += [coin_page(lang, c, updated) for c in coins]
+        pages += [coin_exchange_page(lang, c, e, updated) for c in coins if has_cx(c) for e in c["markets"]]
     for p, text in pages:
         write(p.path, text)
 
