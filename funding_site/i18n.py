@@ -8,18 +8,18 @@ T = {
         "site": "Фандинг Радар",
         "nav_rates": "Ставки", "nav_spreads": "Спреды", "nav_guide": "Гайд",
         "switch": "EN", "switch_title": "English version",
-        "footer": "Данные: публичные API KuCoin, Bybit, OKX и Gate. Обновлено",
+        "footer": "Данные: публичные API KuCoin, OKX и Gate. Обновлено",
         "footer_risk": "Не является финансовой рекомендацией. Торговля деривативами связана с высоким риском. "
                        "Ссылки на биржи могут быть партнёрскими.",
         "by_exchange": "По биржам",
         "million": "млн", "billion": "млрд", "thousand": "тыс",
         "hours": "ч", "days": "дн.",
         # главная
-        "index_title": "Ставки фандинга сегодня: KuCoin, Bybit, OKX, Gate — {n} монет",
-        "index_desc": "Ставки фандинга бессрочных фьючерсов на 4 биржах в годовых: текущие, за 7 и 30 дней, "
+        "index_title": "Ставки фандинга сегодня: KuCoin, OKX, Gate — {n} монет",
+        "index_desc": "Ставки фандинга бессрочных фьючерсов на 3 биржах в годовых: текущие, за 7 и 30 дней, "
                       "межбиржевые спреды и риски по каждой монете. Обновляется каждый час.",
-        "index_h1": "Ставки фандинга на 4 биржах",
-        "index_lead": "Фандинг всех ликвидных бессрочных USDT-фьючерсов KuCoin, Bybit, OKX и Gate в пересчёте на годовые. "
+        "index_h1": "Ставки фандинга на 3 биржах",
+        "index_lead": "Фандинг всех ликвидных бессрочных USDT-фьючерсов KuCoin, OKX и Gate в пересчёте на годовые. "
                       "Положительный фандинг платят лонги шортам — на этом строится дельта-нейтральный арбитраж. "
                       "<a href=\"{guide}\">Как это работает и чем рискуете</a>.",
         "top_h2": "Самый высокий фандинг за неделю",
@@ -50,8 +50,8 @@ T = {
         "col_spot": "Спот", "yes": "есть", "no": "нет",
         "open_ex": "Открыть {ex}",
         # монета
-        "coin_title": "Фандинг {b} сегодня: {apr} годовых — KuCoin, Bybit, OKX, Gate",
-        "coin_desc": "Ставка фандинга {b} на 4 биржах: лучшая {apr} годовых за 7 дней на {ex}. "
+        "coin_title": "Фандинг {b} сегодня: {apr} годовых — KuCoin, OKX, Gate",
+        "coin_desc": "Ставка фандинга {b} на 3 биржах: лучшая {apr} годовых за 7 дней на {ex}. "
                      "Сравнение бирж, график за 30 дней, спред и калькулятор арбитража.",
         "coin_h1": "Фандинг {b}",
         "coin_cards_best": "Лучший хедж (7 дн.)", "coin_cards_spread": "Спред бирж (7 дн.)",
@@ -68,7 +68,7 @@ T = {
                      "за час. Шорт может ликвидировать даже без плеча — это перекроет фандинг за месяцы.",
         "back": "Все монеты", "guide_link": "Как работает арбитраж фандинга",
         # автотекст монеты
-        "txt_markets": "{b} торгуется фьючерсами на {n} из 4 отслеживаемых бирж: {list}.",
+        "txt_markets": "{b} торгуется фьючерсами на {n} из 3 отслеживаемых бирж: {list}.",
         "txt_best": " Самый высокий фандинг за неделю с возможностью хеджа на споте — на {ex}: {apr} годовых.",
         "txt_neg": " За 30 дней на {ex} {neg}% выплат были отрицательными — в эти периоды шорт платит сам.",
         "txt_spread": " Разница ставок между биржами за неделю — {s} годовых (шорт на {hi}, лонг на {lo}).",
@@ -78,16 +78,16 @@ T = {
         "site": "Funding Radar",
         "nav_rates": "Rates", "nav_spreads": "Spreads", "nav_guide": "Guide",
         "switch": "RU", "switch_title": "Русская версия",
-        "footer": "Data: public APIs of KuCoin, Bybit, OKX and Gate. Updated",
+        "footer": "Data: public APIs of KuCoin, OKX and Gate. Updated",
         "footer_risk": "Not financial advice. Derivatives trading involves high risk. Exchange links may be affiliate links.",
         "by_exchange": "By exchange",
         "million": "M", "billion": "B", "thousand": "K",
         "hours": "h", "days": "d",
-        "index_title": "Funding rates today: KuCoin, Bybit, OKX, Gate — {n} coins",
-        "index_desc": "Perpetual futures funding rates on 4 exchanges, annualized: current, 7-day and 30-day averages, "
+        "index_title": "Funding rates today: KuCoin, OKX, Gate — {n} coins",
+        "index_desc": "Perpetual futures funding rates on 3 exchanges, annualized: current, 7-day and 30-day averages, "
                       "cross-exchange spreads and risk flags. Updated hourly.",
-        "index_h1": "Funding rates on 4 exchanges",
-        "index_lead": "Funding rates for every liquid USDT perpetual on KuCoin, Bybit, OKX and Gate, annualized. "
+        "index_h1": "Funding rates on 3 exchanges",
+        "index_lead": "Funding rates for every liquid USDT perpetual on KuCoin, OKX and Gate, annualized. "
                       "Positive funding means longs pay shorts — the basis of delta-neutral funding arbitrage. "
                       "<a href=\"{guide}\">How it works and what can go wrong</a>.",
         "top_h2": "Highest funding this week",
@@ -116,8 +116,8 @@ T = {
         "col_neg_t": "Share of negative payments over 30 days", "col_interval": "Interval",
         "col_spot": "Spot", "yes": "yes", "no": "no",
         "open_ex": "Open {ex}",
-        "coin_title": "{b} funding rate today: {apr} APR — KuCoin, Bybit, OKX, Gate",
-        "coin_desc": "{b} funding rate on 4 exchanges: best {apr} APR over 7 days on {ex}. "
+        "coin_title": "{b} funding rate today: {apr} APR — KuCoin, OKX, Gate",
+        "coin_desc": "{b} funding rate on 3 exchanges: best {apr} APR over 7 days on {ex}. "
                      "Exchange comparison, 30-day chart, spread and arbitrage calculator.",
         "coin_h1": "{b} funding rate",
         "coin_cards_best": "Best hedgeable (7d)", "coin_cards_spread": "Exchange spread (7d)",
@@ -133,7 +133,7 @@ T = {
         "risk_note": "<b>Elevated risk.</b> Young and illiquid coins can pump tens of percent within an hour. "
                      "The short can be liquidated even without leverage — wiping out months of funding.",
         "back": "All coins", "guide_link": "How funding arbitrage works",
-        "txt_markets": "{b} perpetuals trade on {n} of the 4 tracked exchanges: {list}.",
+        "txt_markets": "{b} perpetuals trade on {n} of the 3 tracked exchanges: {list}.",
         "txt_best": " The highest 7-day funding with a spot hedge available is on {ex}: {apr} APR.",
         "txt_neg": " Over 30 days, {neg}% of payments on {ex} were negative — during those periods the short pays.",
         "txt_spread": " The 7-day rate difference between exchanges is {s} APR (short on {hi}, long on {lo}).",

@@ -20,11 +20,10 @@ OUT = os.path.join(ROOT, "public")
 DATA = os.path.join(ROOT, "data.json")
 FEES_ROUND_TRIP = 0.0032  # спот ~0.1% + фьючерс ~0.06%, вход и выход
 
-EXCHANGES = ["kucoin", "bybit", "okx", "gate"]
-EX_NAME = {"kucoin": "KuCoin", "bybit": "Bybit", "okx": "OKX", "gate": "Gate"}
+EXCHANGES = ["kucoin", "okx", "gate"]
+EX_NAME = {"kucoin": "KuCoin", "okx": "OKX", "gate": "Gate"}
 EX_HOME = {
     "kucoin": "https://www.kucoin.com/futures",
-    "bybit": "https://www.bybit.com/trade/usdt/BTCUSDT",
     "okx": "https://www.okx.com/trade-swap/btc-usdt-swap",
     "gate": "https://www.gate.io/futures/USDT/BTC_USDT",
 }
@@ -37,13 +36,13 @@ FAVICON = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox
 CSS = """
 :root{--bg:#f6f6f3;--card:#fff;--text:#1c1c1a;--muted:#6a6a64;--line:#e3e2dc;--accent:#0b7a5c;--accent-ink:#fff;
 --pos:#0b7a5c;--neg:#c2410c;--warn:#9a6a00;--chip:#efeee8;
---c-kucoin:#0b7a5c;--c-bybit:#d97706;--c-okx:#334155;--c-gate:#2563eb}
+--c-kucoin:#0b7a5c;--c-okx:#d97706;--c-gate:#2563eb}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111110;--card:#1a1a18;--text:#ecebe5;
 --muted:#9a9991;--line:#2b2b28;--accent:#34c597;--accent-ink:#0d1a14;--pos:#34c597;--neg:#f97850;--warn:#e0b341;
---chip:#252522;--c-kucoin:#34c597;--c-bybit:#f5a524;--c-okx:#cbd5e1;--c-gate:#60a5fa}}
+--chip:#252522;--c-kucoin:#34c597;--c-okx:#f5a524;--c-gate:#60a5fa}}
 :root[data-theme="dark"]{--bg:#111110;--card:#1a1a18;--text:#ecebe5;--muted:#9a9991;--line:#2b2b28;--accent:#34c597;
---accent-ink:#0d1a14;--pos:#34c597;--neg:#f97850;--warn:#e0b341;--chip:#252522;--c-kucoin:#34c597;--c-bybit:#f5a524;
---c-okx:#cbd5e1;--c-gate:#60a5fa}
+--accent-ink:#0d1a14;--pos:#34c597;--neg:#f97850;--warn:#e0b341;--chip:#252522;--c-kucoin:#34c597;--c-okx:#f5a524;
+--c-gate:#60a5fa}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 a{color:var(--accent)}

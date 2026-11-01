@@ -1,6 +1,6 @@
 # Funding Radar
 
-Статический сайт со ставками фандинга бессрочных фьючерсов KuCoin, Bybit, OKX и Gate (ru + en).
+Статический сайт со ставками фандинга бессрочных фьючерсов KuCoin, OKX и Gate (ru + en).
 GitHub Actions пересобирает его каждый час и публикует на GitHub Pages.
 
 - `funding_site/` — сайт: сбор данных (`fetch.py`, `exchanges.py`), генератор (`build.py`), тексты (`i18n.py`),

@@ -4,11 +4,10 @@
 SITE_URL = "https://deemage.github.io/funding-radar"
 
 # Реферальные параметры: добавляются ко всем ссылкам на биржу.
-# Берутся из партнёрского кабинета биржи, например "rcode=ABC123" (KuCoin) или "affiliate_id=12345" (Bybit).
+# Берутся из партнёрского кабинета биржи, например "rcode=ABC123" (KuCoin).
 # Пусто — обычные ссылки.
 REFERRAL_QUERY = {
     "kucoin": "",
-    "bybit": "",
     "okx": "",
     "gate": "",
 }

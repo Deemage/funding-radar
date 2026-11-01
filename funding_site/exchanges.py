@@ -68,52 +68,6 @@ class KuCoin:
         return sorted(out.items())
 
 
-class Bybit:
-    name = "Bybit"
-    key = "bybit"
-    API = "https://api.bybit.com/v5"
-
-    def _instruments(self, category):
-        items, cursor = [], ""
-        while True:
-            data = get(f"{self.API}/market/instruments-info?category={category}&limit=1000&cursor={cursor}")["result"]
-            items += data["list"]
-            cursor = data.get("nextPageCursor")
-            if not cursor:
-                return items
-
-    def markets(self):
-        spot = {s["symbol"] for s in self._instruments("spot") if s["status"] == "Trading"}
-        info = {i["symbol"]: i for i in self._instruments("linear")
-                if i["contractType"] == "LinearPerpetual" and i["quoteCoin"] == "USDT" and i["status"] == "Trading"}
-        out = []
-        for t in get(f"{self.API}/market/tickers?category=linear")["result"]["list"]:
-            i = info.get(t["symbol"])
-            if not i or not t.get("fundingRate"):
-                continue
-            base = i["baseCoin"]
-            out.append(market(
-                self.key, base, t["symbol"], float(t["fundingRate"]), i["fundingInterval"] / 60,
-                int(t["nextFundingTime"]) // 1000, float(t["turnover24h"]), float(t["markPrice"]),
-                f"{base}USDT" in spot, f"https://www.bybit.com/trade/usdt/{t['symbol']}",
-                int(i["launchTime"]) // 1000))
-        return out
-
-    def history(self, symbol, start, end):
-        out, cursor = {}, end * 1000
-        while cursor > start * 1000:
-            rows = get(f"{self.API}/market/funding/history?category=linear&symbol={symbol}"
-                       f"&startTime={start * 1000}&endTime={cursor}&limit=200")["result"]["list"]
-            if not rows:
-                break
-            for r in rows:
-                out[int(r["fundingRateTimestamp"]) // 1000] = float(r["fundingRate"])
-            cursor = min(int(r["fundingRateTimestamp"]) for r in rows) - 1
-            if len(rows) < 200:
-                break
-        return sorted(out.items())
-
-
 class OKX:
     name = "OKX"
     key = "okx"
@@ -179,4 +133,5 @@ class Gate:
         return sorted((int(r["t"]), float(r["r"])) for r in rows)
 
 
-ALL = [KuCoin(), Bybit(), OKX(), Gate()]
+# Bybit не подключён: его API отвечает 403 на запросы с серверов GitHub Actions.
+ALL = [KuCoin(), OKX(), Gate()]
