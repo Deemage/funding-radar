@@ -16,6 +16,7 @@ REFERRAL_QUERY = {
 # Если ссылки нет, кнопка ведёт на страницу фьючерсов с параметром из REFERRAL_QUERY.
 REFERRAL_LINK = {
     "kucoin": "https://www.kucoin.com/r/rf/Z6CDGYKB",
+    "okx": "https://web3.okx.com/join/MYPROFIT",  # реферальная OKX Wallet (Web3), не биржевая
 }
 
 # Какие монеты показывать
