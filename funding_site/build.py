@@ -133,6 +133,16 @@ def ref(exchange, url):
     return f"{url}{'&' if '?' in url else '?'}{q}" if q else url
 
 
+def signup(exchange):
+    """Ссылка для главной кнопки биржи: готовая реферальная, иначе страница фьючерсов с параметром."""
+    return config.REFERRAL_LINK.get(exchange) or ref(exchange, EX_HOME[exchange])
+
+
+def exchange_buttons(t):
+    return "".join(f'<a class="cta" href="{esc(signup(e))}" rel="sponsored noopener" target="_blank">'
+                   f'{t["open_ex"].format(ex=EX_NAME[e])}</a>' for e in EXCHANGES)
+
+
 def pct(v, digits=1):
     if v is None:
         return '<span class="muted">—</span>'
@@ -268,6 +278,8 @@ def index_page(lang, coins, updated):
 <div class="tablebox"><table data-sortable id="all"><thead><tr><th>{t['col_coin']}</th>
 <th aria-sort="descending">{t['col_best']}</th>{''.join(f'<th>{EX_NAME[e]}</th>' for e in EXCHANGES)}
 <th>{t['col_turnover']}</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>
+<h2>{t['where_h2']}</h2>
+<div class="exlinks">{exchange_buttons(t)}</div>
 <h2>{t['faq_h2']}</h2>{faq_html}
 """
     return p, p.render(t["index_title"].format(n=len(coins)), t["index_desc"], body, updated,
@@ -299,7 +311,7 @@ def exchange_page(lang, ex, coins, updated):
 <th aria-sort="descending">{t['col_7d']}</th><th>{t['col_30d']}</th><th title="{esc(t['col_neg_t'])}">{t['col_neg']}</th>
 <th>{t['col_interval']}</th><th>{t['col_turnover']}</th><th>{t['col_spot']}</th></tr></thead>
 <tbody>{''.join(rows)}</tbody></table></div>
-<p style="margin-top:20px"><a class="cta" href="{esc(ref(ex, EX_HOME[ex]))}" rel="sponsored noopener" target="_blank">{t['open_ex'].format(ex=name)}</a></p>
+<p style="margin-top:20px"><a class="cta" href="{esc(signup(ex))}" rel="sponsored noopener" target="_blank">{t['open_ex'].format(ex=name)}</a></p>
 """
     return p, p.render(t["ex_title"].format(ex=name, n=len(listed)), t["ex_desc"].format(ex=name), body, updated)
 
@@ -431,7 +443,8 @@ document.getElementById('fees').textContent='$'+(pos*{FEES_ROUND_TRIP}).toFixed(
 def guide_page(lang, updated):
     p = Page(lang, "guide.html")
     g = GUIDE[lang]
-    body = (f'<div class="prose">{g["body"]}<p><a class="cta" href="{p.link("index.html")}">{p.t["nav_rates"]} →</a></p></div>')
+    body = (f'<div class="prose">{g["body"]}<p><a href="{p.link("index.html")}">{p.t["nav_rates"]} →</a></p>'
+            f'<h2>{p.t["where_h2"]}</h2><div class="exlinks">{exchange_buttons(p.t)}</div></div>')
     return p, p.render(g["title"], g["desc"], body, updated)
 
 

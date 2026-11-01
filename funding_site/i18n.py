@@ -38,6 +38,7 @@ T = {
         "chip_mm": "высокая маржа", "chip_mm_t": "Биржа требует повышенную маржу — считает монету рискованной",
         "chip_nospot": "нет спота", "chip_nospot_t": "Ни на одной бирже нет пары на споте — захеджировать нельзя",
         "faq_h2": "Частые вопросы",
+        "where_h2": "Где торговать",
         # биржа
         "ex_title": "Ставки фандинга {ex} сегодня — {n} фьючерсов в годовых",
         "ex_desc": "Фандинг бессрочных фьючерсов {ex}: текущий и средний за 7 и 30 дней в годовых, доля "
@@ -106,6 +107,7 @@ T = {
         "chip_mm": "high margin", "chip_mm_t": "The exchange requires higher margin — it considers the coin risky",
         "chip_nospot": "no spot", "chip_nospot_t": "No spot pair on any exchange — cannot be hedged",
         "faq_h2": "FAQ",
+        "where_h2": "Where to trade",
         "ex_title": "{ex} funding rates today — {n} perpetuals, annualized",
         "ex_desc": "{ex} perpetual futures funding: current, 7-day and 30-day average APR, share of negative payments, volume. "
                    "Updated hourly.",

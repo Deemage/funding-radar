@@ -7,9 +7,15 @@ SITE_URL = "https://deemage.github.io/funding-radar"
 # Берутся из партнёрского кабинета биржи, например "rcode=ABC123" (KuCoin).
 # Пусто — обычные ссылки.
 REFERRAL_QUERY = {
-    "kucoin": "",
+    "kucoin": "rcode=Z6CDGYKB",
     "okx": "",
     "gate": "",
+}
+
+# Готовые реферальные ссылки из партнёрского кабинета — на них ведут главные кнопки «Открыть биржу».
+# Если ссылки нет, кнопка ведёт на страницу фьючерсов с параметром из REFERRAL_QUERY.
+REFERRAL_LINK = {
+    "kucoin": "https://www.kucoin.com/r/rf/Z6CDGYKB",
 }
 
 # Какие монеты показывать
