@@ -1,0 +1,6 @@
+__pycache__/
+funding_site/public/
+funding_site/data.json
+kucoin_bot/data/
+kucoin_bot/*_result*.txt
+kucoin_bot/rotate_sweep*.txt
