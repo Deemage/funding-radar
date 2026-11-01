@@ -56,10 +56,10 @@ def summarize(base, markets):
 def _load_markets(ex, log):
     try:
         ms = ex.markets()
-        log(f"{ex.name}: {len(ms)} фьючерсов")
+        log(f"{ex.name}: {len(ms)} futures")
         return ms
     except Exception as e:  # exchange unavailable (e.g. region block): build the site without it
-        log(f"{ex.name}: недоступна ({e})")
+        log(f"{ex.name}: unavailable ({e})")
         return []
 
 
@@ -68,10 +68,10 @@ def _load_history(ex, markets, start, end, log):
         try:
             m["history"] = ex.history(m["symbol"], start, end)
         except Exception as e:
-            log(f"  {ex.name} {m['symbol']}: ошибка истории {e}")
+            log(f"  {ex.name} {m['symbol']}: history error {e}")
             continue
         enrich(m, start, end)
-    log(f"{ex.name}: история загружена ({len(markets)})")
+    log(f"{ex.name}: history loaded ({len(markets)})")
 
 
 def collect(cfg, log=print):

@@ -45,18 +45,18 @@ class Coin:
 def load_universe(args):
     coins = {}
     pairs = liquid_pairs(args.top, args.min_turnover)
-    print(f"Загружаю {len(pairs)} монет...", flush=True)
+    print(f"Loading {len(pairs)} coins...", flush=True)
     for sym, _, mm, listed in pairs:
         try:
             candles = load_candles(sym, "1hour", args.days)
             funding = load_funding(sym, args.days)
             fut = load_futures_candles(futures_symbol(sym), args.days)
         except Exception as e:
-            print(f"  {sym}: ошибка {e}", flush=True)
+            print(f"  {sym}: error {e}", flush=True)
             continue
         if len(candles) > 24 * 30 and len(funding) >= 20:
             coins[sym] = Coin(sym, mm, listed, candles, funding, fut)
-            print(f"  {sym} готово", flush=True)
+            print(f"  {sym} done", flush=True)
     return coins
 
 
@@ -91,7 +91,7 @@ def rotate(coins, cash=1000.0, n=5, lookback=30, period=30, min_age=90, min_apr=
             total = equity()
             if log and t > start:
                 d = datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d")
-                print(f"  {d}  капитал {total:>9,.2f} ({(total / month_start_equity - 1) * 100:+.2f}% за период)")
+                print(f"  {d}  capital {total:>9,.2f} ({(total / month_start_equity - 1) * 100:+.2f}% for the period)")
             month_start_equity = total
             for s in list(active):
                 if s not in wanted:
@@ -114,8 +114,8 @@ def rotate(coins, cash=1000.0, n=5, lookback=30, period=30, min_age=90, min_apr=
                 opened += 1
             if log:
                 d = datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d")
-                desc = ", ".join(f"{s.split('-')[0]} {a:.0f}%" for a, s in picks) or "нет кандидатов — сидим в USDT"
-                print(f"  {d}  в позиции: {desc}")
+                desc = ", ".join(f"{s.split('-')[0]} {a:.0f}%" for a, s in picks) or "no candidates, staying in USDT"
+                print(f"  {d}  in position: {desc}")
             next_rotation = t + period * DAY
 
         for s, arb in active.items():
@@ -149,8 +149,8 @@ def report(label, r, cash):
           f"{r['fees']:>7.2f} {r['opened']:>6} {r['liq']:>5}")
 
 
-HEADER = (f"{'Вариант':<44} {'Итог $':>9} {'Доход':>8} {'Годовых':>8} {'Просадка':>8} "
-          f"{'Комис.':>7} {'Входов':>6} {'Ликв.':>5}")
+HEADER = (f"{'Variant':<44} {'Final $':>9} {'Return':>8} {'APR':>8} {'Max DD':>8} "
+          f"{'Fees':>7} {'Entries':>6} {'Liq.':>5}")
 
 
 def main():
@@ -171,17 +171,17 @@ def main():
 
     coins = load_universe(args)
     if not coins:
-        sys.exit("Не удалось загрузить ни одной монеты")
+        sys.exit("Failed to load any coins")
     base = dict(cash=args.cash, leverage=args.leverage)
 
     if not args.sweep:
-        print(f"\nРотация: топ-{args.n}, окно {args.lookback} дн., раз в {args.period} дн., "
-              f"возраст ≥{args.min_age} дн., фандинг ≥{args.min_apr:g}% годовых")
+        print(f"\nRotation: top {args.n}, window {args.lookback}d, every {args.period}d, "
+              f"age ≥{args.min_age}d, funding ≥{args.min_apr:g}% APR")
         r = rotate(coins, n=args.n, lookback=args.lookback, period=args.period,
                    min_age=args.min_age, min_apr=args.min_apr, log=True, **base)
         print("\n" + HEADER)
         print("-" * len(HEADER))
-        report("Ротация", r, args.cash)
+        report("Rotation", r, args.cash)
     else:
         print("\n" + HEADER)
         print("-" * len(HEADER))
@@ -190,7 +190,7 @@ def main():
                 for min_age in (0, 90, 180):
                     for min_apr in (5, 10, 20):
                         r = rotate(coins, n=n, lookback=lookback, period=30, min_age=min_age, min_apr=min_apr, **base)
-                        report(f"топ-{n} окно {lookback}д возраст≥{min_age}д фанд≥{min_apr}%", r, args.cash)
+                        report(f"top {n} window {lookback}d age≥{min_age}d fund≥{min_apr}%", r, args.cash)
 
     # benchmark: BTC and ETH without rotation over the same period
     for ref in ("BTC-USDT", "ETH-USDT"):
@@ -200,7 +200,7 @@ def main():
         test = [c for c in coin.candles if c.t >= r["start"]]
         arb = FundingArb(args.cash, args.leverage, mm=coin.mm, events_per_year=coin.per_year)
         final, dd = simulate(arb, test, list(zip(coin.times, coin.rates)), coin.fut_high)
-        report(f"{ref} всегда в позиции", {**r, "final": final, "max_dd": dd * 100, "fees": arb.fees,
+        report(f"{ref} always in position", {**r, "final": final, "max_dd": dd * 100, "fees": arb.fees,
                                             "opened": 1, "liq": arb.liquidations}, args.cash)
 
 

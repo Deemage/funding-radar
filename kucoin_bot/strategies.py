@@ -25,7 +25,7 @@ class DCA:
         self.every = every_hours * 3600
         self.dip = dip_pct / 100
         self.dip_mult = dip_mult
-        self.name = f"DCA ${amount:g}/{every_hours}ч" + (f", просадка {dip_pct:g}%×{dip_mult:g}" if dip_pct else "")
+        self.name = f"DCA ${amount:g}/{every_hours}h" + (f", dip {dip_pct:g}%×{dip_mult:g}" if dip_pct else "")
 
     def on_start(self, pf, c):
         self.last_t = None
@@ -58,7 +58,7 @@ class Grid:
         self.lower_pct, self.upper_pct = lower_pct, upper_pct
         self.geometric = geometric
         self.reset_pct = reset_pct
-        self.name = f"Grid {grids} ячеек"
+        self.name = f"Grid {grids} cells"
         self.resets = 0
 
     def on_start(self, pf, c):
@@ -77,9 +77,9 @@ class Grid:
             levels = [lo + (hi - lo) * i / n for i in range(n + 1)]
         self.step_pct = (levels[1] / levels[0] - 1) * 100
         if self.reset_pct is None:
-            self.name = f"Grid {n} яч. {lo:,.0f}–{hi:,.0f} (шаг {self.step_pct:.2f}%)"
+            self.name = f"Grid {n} cells {lo:,.0f}–{hi:,.0f} (step {self.step_pct:.2f}%)"
         else:
-            self.name = f"Grid {n} яч. ±{self.lower_pct:g}%, перестройка {self.reset_pct:g}%"
+            self.name = f"Grid {n} cells ±{self.lower_pct:g}%, reset {self.reset_pct:g}%"
 
         alloc = pf.cash / n / (1 + pf.fee)
         self.slots = []

@@ -78,30 +78,30 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser()
     ap.add_argument("--top", type=int, default=40)
-    ap.add_argument("--min-turnover", type=float, default=5, help="мин. оборот фьючерса за 24ч, млн $")
+    ap.add_argument("--min-turnover", type=float, default=5, help="min futures 24h turnover, $M")
     ap.add_argument("--days", type=int, default=365)
     ap.add_argument("--cash", type=float, default=1000)
     ap.add_argument("--leverage", type=float, default=2)
-    ap.add_argument("--pick", type=int, default=10, help="сколько монет отбирать по 1-му полугодию")
+    ap.add_argument("--pick", type=int, default=10, help="how many coins to pick by first-half funding")
     args = ap.parse_args()
 
     pairs = liquid_pairs(args.top, args.min_turnover)
-    print(f"Сканирую {len(pairs)} монет, история {args.days} дн., плечо шорта {args.leverage:g}x...", flush=True)
+    print(f"Scanning {len(pairs)} coins, {args.days}d history, short leverage {args.leverage:g}x...", flush=True)
     rows = []
     for i, (sym, _, mm, _) in enumerate(pairs, 1):
         try:
             r = scan_one(sym, mm, args)
         except Exception as e:  # one broken coin shouldn't kill the whole scan
-            print(f"  [{i}/{len(pairs)}] {sym}: ошибка {e}", flush=True)
+            print(f"  [{i}/{len(pairs)}] {sym}: error {e}", flush=True)
             continue
-        print(f"  [{i}/{len(pairs)}] {sym}: " + ("мало истории" if r is None else f"фандинг {r['apr_h1']:.1f}% → {r['apr_h2']:.1f}%"), flush=True)
+        print(f"  [{i}/{len(pairs)}] {sym}: " + ("not enough history" if r is None else f"funding {r['apr_h1']:.1f}% → {r['apr_h2']:.1f}%"), flush=True)
         if r:
             rows.append(r)
 
     # coins with no first-half funding (futures listed later) go last
     rows.sort(key=lambda r: -r["apr_h1"] if r["apr_h1"] == r["apr_h1"] else float("inf"))
-    header = (f"\n{'Монета':<12} {'Дней':>5} {'Фанд.1п':>8} {'Фанд.2п':>8} {'Отр.2п':>7} "
-              f"{'Арб 2п год.':>11} {'Просадка':>8} {'Ликв.':>5} {'Ребал.':>6} {'MM':>6}")
+    header = (f"\n{'Coin':<12} {'Days':>5} {'Fund.H1':>8} {'Fund.H2':>8} {'Neg.H2':>7} "
+              f"{'Arb H2 APR':>11} {'Max DD':>8} {'Liq.':>5} {'Rebal.':>6} {'MM':>6}")
     print(header)
     print("-" * len(header))
     for r in rows:
@@ -112,14 +112,14 @@ def main():
     picked = full[:args.pick]
     if picked:
         avg = lambda xs: statistics.mean(xs)
-        print(f"\nОтбор: топ-{len(picked)} по фандингу 1-го полугодия (только монеты с полной историей)")
-        print(f"  фандинг 1п: {avg([r['apr_h1'] for r in picked]):.1f}% → 2п: {avg([r['apr_h2'] for r in picked]):.1f}% годовых")
-        print(f"  арбитраж на 2п (поровну во все): {avg([r['sim_apr'] for r in picked]):+.2f}% годовых, "
-              f"худшая монета {min(r['sim_apr'] for r in picked):+.2f}%, ликвидаций {sum(r['liq'] for r in picked)}")
+        print(f"\nSelection: top {len(picked)} by first-half funding (coins with full history only)")
+        print(f"  funding H1: {avg([r['apr_h1'] for r in picked]):.1f}% → H2: {avg([r['apr_h2'] for r in picked]):.1f}% APR")
+        print(f"  arbitrage on H2 (equal weights): {avg([r['sim_apr'] for r in picked]):+.2f}% APR, "
+              f"worst coin {min(r['sim_apr'] for r in picked):+.2f}%, liquidations {sum(r['liq'] for r in picked)}")
         for ref in ("BTC-USDT", "ETH-USDT"):
             r = next((r for r in rows if r["sym"] == ref), None)
             if r:
-                print(f"  для сравнения {ref}: {r['sim_apr']:+.2f}% годовых")
+                print(f"  for comparison {ref}: {r['sim_apr']:+.2f}% APR")
 
 
 if __name__ == "__main__":

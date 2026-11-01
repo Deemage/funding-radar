@@ -560,7 +560,7 @@ def main():
                 enrich(m, start, updated)
         coins = [s for s in (summarize(c["base"], c["markets"]) for c in saved["coins"]) if s]
     else:
-        print("Собираю данные с бирж...", flush=True)
+        print("Fetching exchange data...", flush=True)
         coins, updated = collect(config, log=lambda msg: print(msg, flush=True))
         with open(DATA, "w", encoding="utf-8") as f:
             json.dump({"updated": updated, "coins": coins}, f)
@@ -584,7 +584,7 @@ def main():
     # files copied as-is to the site root (e.g. Google Search Console verification)
     if os.path.isdir(STATIC):
         shutil.copytree(STATIC, OUT, dirs_exist_ok=True)
-    print(f"Готово: {len(coins)} монет, {len(pages)} страниц в {OUT}")
+    print(f"Done: {len(coins)} coins, {len(pages)} pages in {OUT}")
 
 
 if __name__ == "__main__":

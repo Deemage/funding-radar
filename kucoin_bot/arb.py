@@ -122,29 +122,29 @@ def main():
     ap.add_argument("--symbols", default="BTC-USDT,ETH-USDT,SOL-USDT")
     ap.add_argument("--days", type=int, default=730)
     ap.add_argument("--cash", type=float, default=1000)
-    ap.add_argument("--leverage", type=float, default=2, help="плечо шорта; 2 = треть капитала на марже")
-    ap.add_argument("--fut-fee", type=float, default=0.06, help="комиссия фьючерсов %%, тейкер 0.06")
+    ap.add_argument("--leverage", type=float, default=2, help="short leverage; 2 = a third of capital as margin")
+    ap.add_argument("--fut-fee", type=float, default=0.06, help="futures fee %%, taker 0.06")
     ap.add_argument("--spot-fee", type=float, default=0.1)
     ap.add_argument("--enter-apr", type=float, default=10)
     args = ap.parse_args()
 
-    print(f"Капитал ${args.cash:,.0f}, плечо шорта {args.leverage:g}x, комиссии спот {args.spot_fee}% / фьючерсы {args.fut_fee}%\n")
-    header = (f"{'Монета':<10} {'Режим':<18} {'Итог $':>9} {'Доход':>8} {'Годовых':>8} {'Просадка':>8} "
-              f"{'Фандинг$':>9} {'Комис.$':>8} {'Ребал.':>6} {'Ликв.':>5} {'В позиции':>9}")
+    print(f"Capital ${args.cash:,.0f}, short leverage {args.leverage:g}x, fees spot {args.spot_fee}% / futures {args.fut_fee}%\n")
+    header = (f"{'Coin':<10} {'Mode':<18} {'Final $':>9} {'Return':>8} {'APR':>8} {'Max DD':>8} "
+              f"{'Funding$':>9} {'Fees $':>8} {'Rebal.':>6} {'Liq.':>5} {'In pos.':>9}")
     print(header)
     print("-" * len(header))
     for sym in args.symbols.split(","):
         candles = load_candles(sym, "1hour", args.days)
         funding = load_funding(sym, args.days)
         if not funding:
-            print(f"{sym:<10} нет фьючерса {futures_symbol(sym)}")
+            print(f"{sym:<10} no futures {futures_symbol(sym)}")
             continue
         gaps = [b[0] - a[0] for a, b in zip(funding, funding[1:])]
         per_year = YEAR / statistics.median(gaps)
         rates = [r for _, r in funding]
         years = (candles[-1].t - candles[0].t) / YEAR
 
-        for label, smart in (("всегда в позиции", False), (f"только >{args.enter_apr:g}% год.", True)):
+        for label, smart in (("always in position", False), (f"only >{args.enter_apr:g}% APR", True)):
             arb = FundingArb(args.cash, args.leverage, args.spot_fee / 100, args.fut_fee / 100,
                              smart=smart, enter_apr=args.enter_apr, events_per_year=per_year)
             final, dd = simulate(arb, candles, funding)
@@ -156,7 +156,7 @@ def main():
         neg = sum(r < 0 for r in rates) / len(rates) * 100
         avg_apr = statistics.mean(rates) * per_year * 100
         start = datetime.fromtimestamp(funding[0][0], timezone.utc).strftime("%Y-%m-%d")
-        print(f"{'':<10} фандинг с {start}: средний {avg_apr:.1f}% годовых, отрицательный {neg:.0f}% времени\n")
+        print(f"{'':<10} funding since {start}: mean {avg_apr:.1f}% APR, negative {neg:.0f}% of the time\n")
 
 
 if __name__ == "__main__":

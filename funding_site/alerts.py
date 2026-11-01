@@ -80,12 +80,12 @@ def main():
         print(text)
         return
     if not os.environ.get("TELEGRAM_BOT_TOKEN") or not os.environ.get("TELEGRAM_CHAT_ID"):
-        print("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID не заданы — пропускаю")
+        print("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not set, skipping")
         return
     if not args.force and datetime.now(timezone.utc).hour not in config.TELEGRAM_POST_HOURS_UTC:
-        print("Сейчас не время публикации — пропускаю")
+        print("Not a posting hour, skipping")
         return
-    print("Отправлено" if send(text) else "Telegram вернул ошибку")
+    print("Sent" if send(text) else "Telegram returned an error")
 
 
 if __name__ == "__main__":

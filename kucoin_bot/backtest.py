@@ -21,8 +21,8 @@ def fmt_row(r):
             f"{r['max_dd_pct']:>7.2f}% {r['trades']:>7} {r['fees']:>8.2f} {r['in_coin_pct']:>6.1f}%")
 
 
-HEADER = (f"{'Стратегия':<46} {'Итог $':>10} {'Доход':>9} {'Просадка':>8} "
-          f"{'Сделок':>7} {'Комис.$':>8} {'В монете':>7}")
+HEADER = (f"{'Strategy':<46} {'Final $':>10} {'Return':>9} {'Max DD':>8} "
+          f"{'Trades':>7} {'Fees $':>8} {'In coin':>7}")
 
 
 def main():
@@ -32,22 +32,22 @@ def main():
     ap.add_argument("--interval", default="1hour")
     ap.add_argument("--days", type=int, default=180)
     ap.add_argument("--cash", type=float, default=1000)
-    ap.add_argument("--fee", type=float, default=0.1, help="комиссия в %%, KuCoin по умолчанию 0.1")
+    ap.add_argument("--fee", type=float, default=0.1, help="fee in %%, KuCoin default 0.1")
     ap.add_argument("--grids", type=int, default=20)
-    ap.add_argument("--range", type=float, default=10, help="диапазон грида ±%% от стартовой цены")
-    ap.add_argument("--dca", type=float, default=None, help="сумма DCA за покупку, по умолчанию так, чтобы хватило на весь период")
-    ap.add_argument("--reset", type=float, default=5, help="перестройка грида при выходе за диапазон на N%%")
-    ap.add_argument("--sweep", action="store_true", help="перебор параметров грида")
-    ap.add_argument("--walkforward", action="store_true", help="подбор на 1-й половине, проверка на 2-й")
+    ap.add_argument("--range", type=float, default=10, help="grid range ±%% of the start price")
+    ap.add_argument("--dca", type=float, default=None, help="DCA amount per buy; by default, enough to last the whole period")
+    ap.add_argument("--reset", type=float, default=5, help="rebuild the grid when price leaves the range by N%%")
+    ap.add_argument("--sweep", action="store_true", help="grid parameter sweep")
+    ap.add_argument("--walkforward", action="store_true", help="fit on the 1st half, test on the 2nd")
     args = ap.parse_args()
 
     candles = load_candles(args.symbol, args.interval, args.days)
     fee = args.fee / 100
     first, last = candles[0], candles[-1]
     d = lambda t: datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d")
-    print(f"{args.symbol} {args.interval}: {len(candles)} свечей, {d(first.t)} → {d(last.t)}, "
-          f"цена {first.o:,.2f} → {last.c:,.2f} ({(last.c / first.o - 1) * 100:+.2f}%)")
-    print(f"Капитал ${args.cash:,.0f}, комиссия {args.fee}%\n")
+    print(f"{args.symbol} {args.interval}: {len(candles)} candles, {d(first.t)} → {d(last.t)}, "
+          f"price {first.o:,.2f} → {last.c:,.2f} ({(last.c / first.o - 1) * 100:+.2f}%)")
+    print(f"Capital ${args.cash:,.0f}, fee {args.fee}%\n")
     print(HEADER)
     print("-" * len(HEADER))
 
@@ -91,12 +91,12 @@ def walkforward(candles, args, fee):
     ranked = sorted(range(len(configs)), key=lambda i: -run(configs[i](), train, args.cash, fee)["return_pct"])
     top = ranked[:5]
 
-    print(f"Обучение: первая половина ({len(train)} свечей). Топ-5 гридов:")
+    print(f"Training: first half ({len(train)} candles). Top 5 grids:")
     for i in top:
         print(fmt_row(run(configs[i](), train, args.cash, fee)))
 
     move = (test[-1].c / test[0].o - 1) * 100
-    print(f"\nПроверка: вторая половина ({len(test)} свечей, цена {move:+.2f}%). Те же 5 гридов + эталоны:")
+    print(f"\nTest: second half ({len(test)} candles, price {move:+.2f}%). Same 5 grids + benchmarks:")
     for i in top:
         print(fmt_row(run(configs[i](), test, args.cash, fee)))
     for s in baselines(round(args.cash / (args.days / 2), 2)):
