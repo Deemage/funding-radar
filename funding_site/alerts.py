@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 
 import config
 from build import DATA, EX_NAME, risky
+from i18n import PREFIX
 
 TEXT = {
     "ru": {
@@ -44,7 +45,7 @@ def message(coins, lang):
     solid = [c for c in coins if c["best"] and not risky(c)]
     top = sorted(solid, key=lambda c: -c["best_apr_7d"])[:5]
     spreads = sorted((c for c in coins if c["spread"] and not risky(c)), key=lambda c: -c["spread"]["apr_7d"])[:3]
-    prefix = "" if lang == "ru" else "en/"
+    prefix = PREFIX[lang]
     lines = [t["title"], "", t["top"]]
     lines += [f"• <a href=\"{config.SITE_URL}/{prefix}coin/{html.escape(c['base'])}.html\">{html.escape(c['base'])}</a> "
               f"{c['best_apr_7d']:+.1f}% — {EX_NAME[c['best']]}" for c in top]
