@@ -141,8 +141,10 @@ def signup(exchange):
 
 
 def exchange_buttons(t):
+    """Кнопки «Где торговать» — только для бирж с реферальной ссылкой или параметром."""
+    partners = [e for e in EXCHANGES if config.REFERRAL_LINK.get(e) or config.REFERRAL_QUERY.get(e)]
     return "".join(f'<a class="cta" href="{esc(signup(e))}" rel="sponsored noopener" target="_blank">'
-                   f'{t["open_ex"].format(ex=EX_NAME[e])}</a>' for e in EXCHANGES)
+                   f'{t["open_ex"].format(ex=EX_NAME[e])}</a>' for e in partners)
 
 
 def pct(v, digits=1):
