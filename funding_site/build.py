@@ -7,6 +7,7 @@ import argparse
 import html
 import json
 import os
+import shutil
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -18,6 +19,7 @@ from i18n import FAQ, GUIDE, LANGS, PREFIX, T
 ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "public")
 DATA = os.path.join(ROOT, "data.json")
+STATIC = os.path.join(ROOT, "static")
 FEES_ROUND_TRIP = 0.0032  # спот ~0.1% + фьючерс ~0.06%, вход и выход
 
 EXCHANGES = ["kucoin", "okx", "gate"]
@@ -492,6 +494,9 @@ def main():
           + "</urlset>\n")
     write("robots.txt", f"User-agent: *\nAllow: /\nSitemap: {config.SITE_URL}/sitemap.xml\n")
     write(".nojekyll", "")
+    # файлы как есть в корень сайта (например, подтверждение Google Search Console)
+    if os.path.isdir(STATIC):
+        shutil.copytree(STATIC, OUT, dirs_exist_ok=True)
     print(f"Готово: {len(coins)} монет, {len(pages)} страниц в {OUT}")
 
 
