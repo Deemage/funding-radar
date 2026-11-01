@@ -1,7 +1,7 @@
-"""Собирает статический сайт (ru + en) в папку public/.
+"""Builds the static site (en + ru) into public/.
 
-  python build.py            # скачать свежие данные со всех бирж и собрать
-  python build.py --cached   # собрать из data.json прошлого запуска (без сети)
+  python build.py            # fetch fresh data from all exchanges and build
+  python build.py --cached   # build from the previous run's data.json (no network)
 """
 import argparse
 import html
@@ -20,7 +20,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "public")
 DATA = os.path.join(ROOT, "data.json")
 STATIC = os.path.join(ROOT, "static")
-FEES_ROUND_TRIP = 0.0032  # спот ~0.1% + фьючерс ~0.06%, вход и выход
+FEES_ROUND_TRIP = 0.0032  # spot ~0.1% + futures ~0.06%, entry and exit
 
 EXCHANGES = ["kucoin", "okx", "gate"]
 EX_NAME = {"kucoin": "KuCoin", "okx": "OKX", "gate": "Gate"}
@@ -136,12 +136,12 @@ def ref(exchange, url):
 
 
 def signup(exchange):
-    """Ссылка для главной кнопки биржи: готовая реферальная, иначе страница фьючерсов с параметром."""
+    """Link for the main exchange button: the ready-made referral link, else the futures page with the referral param."""
     return config.REFERRAL_LINK.get(exchange) or ref(exchange, EX_HOME[exchange])
 
 
 def exchange_buttons(t):
-    """Кнопки «Где торговать» — только для бирж с реферальной ссылкой или параметром."""
+    """'Where to trade' buttons, only for exchanges that have a referral link or param."""
     partners = [e for e in EXCHANGES if config.REFERRAL_LINK.get(e) or config.REFERRAL_QUERY.get(e)]
     return "".join(f'<a class="cta" href="{esc(signup(e))}" rel="sponsored noopener" target="_blank">'
                    f'{t["open_ex"].format(ex=EX_NAME[e])}</a>' for e in partners)
@@ -179,7 +179,7 @@ def chips(c, t):
 
 
 def faq_block(items):
-    """Вопросы-ответы: HTML для страницы и JSON-LD FAQPage для <head>."""
+    """FAQ: HTML for the page and FAQPage JSON-LD for <head>."""
     body = "".join(f"<details><summary>{esc(q)}</summary><p>{esc(a)}</p></details>" for q, a in items)
     ld = json.dumps({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
         {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in items]},
@@ -188,7 +188,7 @@ def faq_block(items):
 
 
 def has_cx(c):
-    """Страница «монета на бирже» есть, только если монета торгуется на 2+ биржах — иначе она дублирует страницу монеты."""
+    """A coin-on-exchange page exists only if the coin trades on 2+ exchanges, otherwise it duplicates the coin page."""
     return len(c["markets"]) >= 2
 
 
@@ -197,13 +197,13 @@ def cx_path(c, ex):
 
 
 def apr_list(c, key):
-    """«OKX +12.3%, Gate +8.1%» — биржи монеты по убыванию метрики."""
+    """'OKX +12.3%, Gate +8.1%': the coin's exchanges sorted by the metric, descending."""
     ms = sorted((m for m in c["markets"].values() if m[key] is not None), key=lambda m: -m[key])
     return ", ".join(f"{EX_NAME[m['exchange']]} {m[key]:+.1f}%" for m in ms)
 
 
 class Page:
-    """Одна страница в одной языковой версии: знает свой путь и строит относительные ссылки."""
+    """One page in one language version: knows its own path and builds relative links."""
 
     def __init__(self, lang, path):
         self.lang, self.path = lang, PREFIX[lang] + path
@@ -341,7 +341,7 @@ def exchange_page(lang, ex, coins, updated):
 
 
 def daily_apr(history):
-    """Фандинг по дням (UTC) в годовых: сумма ставок за день × 365."""
+    """Daily (UTC) funding as APR: sum of the day's rates × 365."""
     days = defaultdict(float)
     for ts, r in history:
         days[ts // 86400] += r
@@ -349,12 +349,12 @@ def daily_apr(history):
 
 
 def chart_svg(series):
-    """series: {exchange: {day: apr}} → SVG с линией на каждую биржу."""
+    """series: {exchange: {day: apr}} → SVG with one line per exchange."""
     days = sorted({d for s in series.values() for d in s})
     if len(days) < 2:
         return ""
     vals = sorted(abs(v) for s in series.values() for v in s.values())
-    cap = max(vals[int(len(vals) * 0.95)] * 1.5, 10)  # одиночные выбросы не сплющивают график
+    cap = max(vals[int(len(vals) * 0.95)] * 1.5, 10)  # so single outliers don't flatten the chart
     clip = lambda v: max(-cap, min(cap, v))
     top = max(max(clip(v) for s in series.values() for v in s.values()), 0)
     bottom = min(min(clip(v) for s in series.values() for v in s.values()), 0)
@@ -473,14 +473,14 @@ document.getElementById('fees').textContent='$'+(pos*{FEES_ROUND_TRIP}).toFixed(
 
 
 def coin_exchange_page(lang, c, ex, updated):
-    """Монета на одной бирже: под запросы вида «BTC funding rate OKX»."""
+    """A coin on one exchange: targets queries like 'BTC funding rate OKX'."""
     p = Page(lang, cx_path(c, ex))
     t, b, m, name = p.t, c["base"], c["markets"][ex], EX_NAME[ex]
     f = lambda v: f"{v:+.1f}%" if v is not None else "—"
     nums = dict(b=b, ex=name, h=f"{m['interval_h']:g}", rate=f"{m['rate'] * 100:+.4f}%", now=f(m["apr_now"]),
                 d7=f(m["apr_7d"]), d30=f(m["apr_30d"]), neg=f"{m['neg_share'] or 0:.0f}")
 
-    days = {d: a for d, a in daily_apr(m["history"]).items() if d < updated // 86400}  # без неполного сегодняшнего дня
+    days = {d: a for d, a in daily_apr(m["history"]).items() if d < updated // 86400}  # skip today's incomplete day
     fmt = lambda d: datetime.fromtimestamp(d * 86400, timezone.utc).strftime("%Y-%m-%d")
     hist_rows = "".join(f'<tr><td>{fmt(d)}</td><td data-v="{a / 365:.4f}">{pct(a / 365, 3)}</td>'
                         f'<td data-v="{a:.3f}">{pct(a)}</td></tr>' for d, a in sorted(days.items(), reverse=True)[:14])
@@ -553,7 +553,7 @@ def main():
         with open(DATA, encoding="utf-8") as f:
             saved = json.load(f)
         updated = saved["updated"]
-        # метрики пересчитываем из сохранённой истории — правки формул применяются без скачивания
+        # recompute metrics from saved history so formula changes apply without refetching
         start = updated - config.HISTORY_DAYS * 86400
         for c in saved["coins"]:
             for m in c["markets"].values():
@@ -581,7 +581,7 @@ def main():
           + "</urlset>\n")
     write("robots.txt", f"User-agent: *\nAllow: /\nSitemap: {config.SITE_URL}/sitemap.xml\n")
     write(".nojekyll", "")
-    # файлы как есть в корень сайта (например, подтверждение Google Search Console)
+    # files copied as-is to the site root (e.g. Google Search Console verification)
     if os.path.isdir(STATIC):
         shutil.copytree(STATIC, OUT, dirs_exist_ok=True)
     print(f"Готово: {len(coins)} монет, {len(pages)} страниц в {OUT}")

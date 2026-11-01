@@ -1,11 +1,11 @@
-"""Бэктест стратегий на истории KuCoin.
+"""Strategy backtests on KuCoin history.
 
-Примеры:
-  python backtest.py                                  # сравнить всё на BTC-USDT за 180 дней
+Examples:
+  python backtest.py                                  # compare everything on BTC-USDT over 180 days
   python backtest.py --symbol ETH-USDT --days 365
-  python backtest.py --grids 30 --range 15            # грид ±15%, 30 ячеек
-  python backtest.py --sweep                          # перебор параметров грида
-  python backtest.py --days 730 --walkforward         # подбор на 1-м году, проверка на 2-м
+  python backtest.py --grids 30 --range 15            # ±15% grid, 30 cells
+  python backtest.py --sweep                          # grid parameter sweep
+  python backtest.py --days 730 --walkforward         # fit on year 1, test on year 2
 """
 import argparse
 import sys
@@ -78,13 +78,13 @@ def baselines(dca_amount):
 
 
 def grid_configs():
-    """Фабрики гридов для перебора: диапазон × число ячеек × перестройка."""
+    """Grid factories for the sweep: range × cell count × reset."""
     return [lambda r=r, g=g, x=x: Grid(grids=g, lower_pct=r, upper_pct=r, reset_pct=x)
             for r in (5, 10, 15, 20, 30) for g in (10, 20, 30, 50) for x in (None, 5)]
 
 
 def walkforward(candles, args, fee):
-    """Подбираем параметры грида на первой половине истории, честно проверяем на второй."""
+    """Fit grid parameters on the first half of history, test honestly on the second."""
     mid = len(candles) // 2
     train, test = candles[:mid], candles[mid:]
     configs = grid_configs()

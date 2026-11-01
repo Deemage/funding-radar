@@ -1,14 +1,14 @@
-"""Фандинг-арбитраж с ротацией: раз в N дней переотбираем монеты по фандингу за прошлый период.
+"""Funding arbitrage with rotation: every N days, reselect coins by funding over the past period.
 
-Каждый период:
-  - считаем средний фандинг каждой монеты за последние `lookback` дней (только прошлое, без подглядывания);
-  - отбрасываем фьючерсы младше `min_age` дней и монеты с фандингом ниже `min_apr`;
-  - берём топ-N; выбывшие закрываем, новые открываем, оставшиеся не трогаем (экономим комиссии).
+Each period:
+  - compute each coin's mean funding over the last `lookback` days (past only, no look-ahead);
+  - drop futures younger than `min_age` days and coins with funding below `min_apr`;
+  - take the top N; close dropped coins, open new ones, keep the rest (saves fees).
 
-Примеры:
-  python rotate.py                       # топ-5, окно 30 дн., возраст от 90 дн., фандинг от 10%
+Examples:
+  python rotate.py                       # top 5, 30-day window, age 90+ days, funding 10%+
   python rotate.py --n 10 --min-apr 5
-  python rotate.py --sweep               # перебор параметров
+  python rotate.py --sweep               # parameter sweep
 """
 import argparse
 import bisect
@@ -192,7 +192,7 @@ def main():
                         r = rotate(coins, n=n, lookback=lookback, period=30, min_age=min_age, min_apr=min_apr, **base)
                         report(f"топ-{n} окно {lookback}д возраст≥{min_age}д фанд≥{min_apr}%", r, args.cash)
 
-    # эталон: BTC и ETH без ротации за тот же период
+    # benchmark: BTC and ETH without rotation over the same period
     for ref in ("BTC-USDT", "ETH-USDT"):
         coin = coins.get(ref)
         if not coin:

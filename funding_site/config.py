@@ -1,32 +1,32 @@
-"""Настройки сайта. Меняй здесь, остальной код трогать не нужно."""
+"""Site settings. Change things here; no need to touch the rest of the code."""
 
-# Адрес сайта после публикации (нужен для sitemap, canonical и hreflang), без слеша в конце
+# Published site URL (used for sitemap, canonical and hreflang), no trailing slash
 SITE_URL = "https://deemage.github.io/funding-radar"
 
-# Реферальные параметры: добавляются ко всем ссылкам на биржу.
-# Берутся из партнёрского кабинета биржи, например "rcode=ABC123" (KuCoin).
-# Пусто — обычные ссылки.
+# Referral params appended to every link to the exchange.
+# Taken from the exchange's affiliate dashboard, e.g. "rcode=ABC123" (KuCoin).
+# Empty means plain links.
 REFERRAL_QUERY = {
     "kucoin": "rcode=Z6CDGYKB",
     "okx": "",
     "gate": "",
 }
 
-# Готовые реферальные ссылки из партнёрского кабинета — на них ведут главные кнопки «Открыть биржу».
-# Если ссылки нет, кнопка ведёт на страницу фьючерсов с параметром из REFERRAL_QUERY.
+# Ready-made referral links from the affiliate dashboard; the main 'Open exchange' buttons point to them.
+# Without a link, the button points to the futures page with the REFERRAL_QUERY param.
 REFERRAL_LINK = {
     "kucoin": "https://www.kucoin.com/r/rf/Z6CDGYKB",
-    "okx": "https://web3.okx.com/join/MYPROFIT",  # реферальная OKX Wallet (Web3), не биржевая
+    "okx": "https://web3.okx.com/join/MYPROFIT",  # OKX Wallet (Web3) referral, not the exchange one
 }
 
-# Какие монеты показывать
-MIN_MARKET_TURNOVER_USD = 300_000   # рынок на конкретной бирже учитываем от такого оборота за 24ч
-MIN_TURNOVER_USD = 2_000_000        # монету показываем от такого суммарного оборота по всем биржам
-MAX_COINS = 150                     # сколько монет (по убыванию оборота)
-HISTORY_DAYS = 30                   # глубина истории фандинга
-YOUNG_DAYS = 90                     # монета младше — помечаем как повышенный риск
+# Which coins to show
+MIN_MARKET_TURNOVER_USD = 300_000   # count a market on an exchange from this 24h turnover
+MIN_TURNOVER_USD = 2_000_000        # show a coin from this total turnover across exchanges
+MAX_COINS = 150                     # how many coins (by turnover, descending)
+HISTORY_DAYS = 30                   # funding history depth
+YOUNG_DAYS = 90                     # coins younger than this are flagged as higher risk
 
-# Telegram-канал (алерты). Токен и id канала — в переменных окружения
-# TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID (на GitHub — в Secrets).
+# Telegram channel (alerts). Token and channel id come from the environment variables
+# TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID (on GitHub, in Secrets).
 TELEGRAM_LANG = "ru"
-TELEGRAM_POST_HOURS_UTC = [7, 19]   # в какие часы публиковать сводку
+TELEGRAM_POST_HOURS_UTC = [7, 19]   # hours to post the digest at

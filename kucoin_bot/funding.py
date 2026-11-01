@@ -1,4 +1,4 @@
-"""История ставок фандинга KuCoin Futures (публичный API, ключи не нужны)."""
+"""KuCoin Futures funding rate history (public API, no keys needed)."""
 import csv
 import json
 import os
@@ -8,11 +8,11 @@ import urllib.request
 from data import CACHE_DIR, CACHE_TTL
 
 API = "https://api-futures.kucoin.com/api/v1/contract/funding-rates"
-PAGE_LIMIT = 100  # KuCoin отдаёт не больше 100 записей за запрос
+PAGE_LIMIT = 100  # KuCoin returns at most 100 rows per request
 
 
 def futures_symbol(spot_symbol):
-    """BTC-USDT → XBTUSDTM (у KuCoin биткоин на фьючерсах называется XBT)."""
+    """BTC-USDT → XBTUSDTM (KuCoin calls bitcoin XBT on futures)."""
     base, quote = spot_symbol.split("-")
     return ("XBT" if base == "BTC" else base) + quote + "M"
 
@@ -28,7 +28,7 @@ def _get(symbol, start_ms, end_ms):
 
 
 def fetch_funding(symbol, start_ms, end_ms):
-    """[(time_sec, rate)] по возрастанию. Если окно упёрлось в лимит, делим его пополам."""
+    """[(time_sec, rate)] ascending. If a window hits the limit, split it in half."""
     out = {}
     window = 30 * 86400 * 1000
     cursor = start_ms

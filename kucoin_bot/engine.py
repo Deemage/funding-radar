@@ -1,11 +1,11 @@
-"""Движок бэктеста: портфель с комиссиями и прогон стратегии по свечам."""
+"""Backtest engine: a portfolio with fees and a strategy run over candles."""
 
 
 class Portfolio:
     def __init__(self, cash, fee):
         self.cash = cash
         self.base = 0.0
-        self.fee = fee  # доля, 0.001 = 0.1% (базовая комиссия KuCoin spot)
+        self.fee = fee  # fraction, 0.001 = 0.1% (KuCoin spot base fee)
         self.fees_paid = 0.0
         self.trades = []  # (t, side, qty, price)
 

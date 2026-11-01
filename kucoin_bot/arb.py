@@ -1,13 +1,13 @@
-"""Бэктест фандинг-арбитража на KuCoin: монета на споте + шорт бессрочного фьючерса на ту же сумму.
-Цена монеты взаимно гасится, доход = фандинг, который лонги платят шортам.
+"""Funding arbitrage backtest on KuCoin: coin on spot + short perpetual of the same size.
+The coin's price cancels out; income = funding that longs pay to shorts.
 
-Примеры:
-  python arb.py                                     # BTC, ETH, SOL за 2 года
+Examples:
+  python arb.py                                     # BTC, ETH, SOL over 2 years
   python arb.py --symbols BTC-USDT --leverage 3
-  python arb.py --enter-apr 15                      # умный режим входит, только если фандинг > 15% годовых
+  python arb.py --enter-apr 15                      # smart mode enters only when funding > 15% APR
 
-Упрощения: фьючерс считаем по цене спота (базис игнорируем), ордера рыночные (тейкер),
-ликвидацию проверяем по максимуму часовой свечи.
+Simplifications: futures priced at spot (basis ignored), market orders (taker),
+liquidation checked against the hourly candle high.
 """
 import argparse
 import statistics
@@ -31,9 +31,9 @@ class FundingArb:
         self.enter_apr, self.exit_apr = enter_apr, exit_apr
         self.recent = deque(maxlen=lookback)
         self.events_per_year = events_per_year
-        self.q = 0.0       # монет на споте = размер шорта
-        self.entry = 0.0   # цена входа шорта
-        self.margin = 0.0  # маржа на фьючерсном счёте (включая полученный фандинг)
+        self.q = 0.0       # coins on spot = short size
+        self.entry = 0.0   # short entry price
+        self.margin = 0.0  # futures account margin (including funding received)
         self.funding_got = self.fees = 0.0
         self.rebalances = self.liquidations = self.switches = 0
         self.hours_in = 0
@@ -45,7 +45,7 @@ class FundingArb:
         return self.cash + self.q * p + self.fut_equity(p)
 
     def _resize(self, p, target_q):
-        """Приводим позицию к target_q монет (спот и шорт одновременно), маржа = остаток капитала."""
+        """Resize the position to target_q coins (spot and short together); margin = remaining capital."""
         total = self.equity(p)
         fee = abs(target_q - self.q) * p * (self.spot_fee + self.fut_fee)
         self.fees += fee
@@ -64,7 +64,7 @@ class FundingArb:
     def on_funding(self, rate, p):
         self.recent.append(rate)
         if self.q:
-            pay = self.q * p * rate  # положительный фандинг: лонги платят шортам
+            pay = self.q * p * rate  # positive funding: longs pay shorts
             self.margin += pay
             self.funding_got += pay
         if not self.smart or len(self.recent) < self.recent.maxlen:
@@ -78,16 +78,16 @@ class FundingArb:
             self.switches += 1
 
     def on_candle(self, c, fut_high=None):
-        """fut_high — максимум часа на фьючерсе. Ликвидацию проверяем по нему: у тонких альтов
-        спотовые хвосты бывают +100%, которых на фьючерсе (и в маркированной цене) не было."""
+        """fut_high is the hourly futures high, used for the liquidation check: thin alts can have
+        +100% spot wicks that never happened on futures (or in the mark price)."""
         if not self.q:
             return
         self.hours_in += 1
         high = fut_high or c.h
         if self.fut_equity(high) <= self.mm * self.q * high:
-            # ликвидация шорта: фьючерсный счёт обнуляется, спот остаётся без хеджа
+            # short liquidated: futures account goes to zero, spot is left unhedged
             self.liquidations += 1
-            self.margin, self.entry = 0.0, c.c  # фьючерсный счёт = 0, остаётся только спот
+            self.margin, self.entry = 0.0, c.c  # futures account = 0, only spot remains
             self.open(c.c)
             return
         ratio = self.fut_equity(c.c) / (self.q * c.c)
@@ -98,7 +98,7 @@ class FundingArb:
 
 
 def simulate(arb, candles, funding, fut_high=None):
-    """fut_high: {час: максимум фьючерса} для проверки ликвидаций; без него — по споту."""
+    """fut_high: {hour: futures high} for liquidation checks; without it, spot is used."""
     fut_high = fut_high or {}
     by_hour = {c.t: c for c in candles}
     events = deque(f for f in funding if f[0] >= candles[0].t)

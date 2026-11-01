@@ -1,8 +1,8 @@
-"""Стратегии: Buy&Hold (эталон), DCA, спотовый грид."""
+"""Strategies: Buy&Hold (benchmark), DCA, spot grid."""
 
 
 def price_path(c):
-    """Внутрисвечной путь цены: зелёная свеча open→low→high→close, красная open→high→low→close."""
+    """Intra-candle price path: green candle open→low→high→close, red open→high→low→close."""
     return [c.o, c.l, c.h, c.c] if c.c >= c.o else [c.o, c.h, c.l, c.c]
 
 
@@ -17,8 +17,8 @@ class BuyHold:
 
 
 class DCA:
-    """Покупка на фиксированную сумму раз в `every_hours`.
-    Если цена упала на dip_pct% от последней покупки, внеочередная покупка × dip_mult."""
+    """Buy a fixed amount every `every_hours`.
+    If price drops dip_pct% below the last buy, make an extra buy × dip_mult."""
 
     def __init__(self, amount=20.0, every_hours=24, dip_pct=0.0, dip_mult=2.0):
         self.amount = amount
@@ -33,7 +33,7 @@ class DCA:
 
     def _buy(self, pf, usd, c):
         usd = min(usd, pf.cash / (1 + pf.fee))
-        if usd >= 0.1 and pf.buy(usd / c.c, c.c, c.t):  # минимальный ордер KuCoin ~0.1 USDT
+        if usd >= 0.1 and pf.buy(usd / c.c, c.c, c.t):  # KuCoin minimum order ~0.1 USDT
             self.last_t, self.last_price = c.t, c.c
 
     def on_candle(self, pf, c):
@@ -44,12 +44,12 @@ class DCA:
 
 
 class Grid:
-    """Классический спотовый грид, как у KuCoin Spot Grid.
-    Диапазон [lower, upper] делится на `grids` ячеек. В каждой ячейке либо ждём покупку
-    на нижнем уровне, либо держим монету и ждём продажу на верхнем.
-    lower/upper можно задать в % от стартовой цены (lower_pct/upper_pct).
-    reset_pct: если цена закрылась дальше чем на reset_pct% за границей диапазона,
-    бот продаёт всё по рынку и строит новый грид вокруг текущей цены (None = не перестраивать)."""
+    """Classic spot grid, like KuCoin Spot Grid.
+    The [lower, upper] range is split into `grids` cells. Each cell either waits to buy
+    at its lower level, or holds the coin and waits to sell at its upper level.
+    lower/upper can be given as % of the start price (lower_pct/upper_pct).
+    reset_pct: if price closes more than reset_pct% outside the range,
+    the bot sells everything at market and builds a new grid around the current price (None = never reset)."""
 
     def __init__(self, grids=20, lower=None, upper=None, lower_pct=10, upper_pct=10, geometric=True,
                  reset_pct=None):
@@ -89,7 +89,7 @@ class Grid:
             if s["holding"]:
                 init_qty += s["qty"]
             self.slots.append(s)
-        # ячейки выше текущей цены сразу заполняем монетой по рынку, чтобы было что продавать
+        # fill cells above the current price with coin at market right away, so there is something to sell
         pf.buy(init_qty, p, t)
 
     def on_candle(self, pf, c):
@@ -102,11 +102,11 @@ class Grid:
                 return
         path = price_path(c)
         for a, b in zip(path, path[1:]):
-            if b < a:  # цена идёт вниз, срабатывают лимитные покупки
+            if b < a:  # price moving down: limit buys fill
                 for s in self.slots:
                     if not s["holding"] and b <= s["buy"] < a and pf.buy(s["qty"], s["buy"], c.t):
                         s["holding"] = True
-            elif b > a:  # цена идёт вверх, срабатывают лимитные продажи
+            elif b > a:  # price moving up: limit sells fill
                 for s in self.slots:
                     if s["holding"] and a < s["sell"] <= b and pf.sell(s["qty"], s["sell"], c.t):
                         s["holding"] = False

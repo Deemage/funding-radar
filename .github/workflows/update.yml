@@ -1,4 +1,4 @@
-# Раз в час собирает сайт со свежими ставками и публикует на GitHub Pages.
+# Rebuilds the site with fresh rates every hour and publishes it to GitHub Pages.
 name: update-site
 
 on:

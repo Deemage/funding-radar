@@ -1,4 +1,4 @@
-"""Загрузка исторических свечей с публичного API KuCoin (ключи не нужны)."""
+"""Historical candle loading from the public KuCoin API (no keys needed)."""
 import csv
 import json
 import os
@@ -19,7 +19,7 @@ CACHE_TTL = 6 * 3600
 
 
 def fetch_candles(symbol, interval, start, end):
-    """Свечи [start, end) по возрастанию времени. KuCoin отдаёт до 1500 штук за запрос."""
+    """Candles in [start, end), ascending by time. KuCoin returns up to 1500 per request."""
     step = INTERVALS[interval]
     rows = {}
     cursor = end
@@ -30,12 +30,12 @@ def fetch_candles(symbol, interval, start, end):
             body = json.load(resp)
         if body.get("code") != "200000":
             raise RuntimeError(f"KuCoin API error: {body}")
-        # формат KuCoin: [time, open, close, high, low, volume, turnover]
+        # KuCoin format: [time, open, close, high, low, volume, turnover]
         for t, o, c, h, l, v, _ in body["data"]:
             t = int(t)
             rows[t] = Candle(t, float(o), float(h), float(l), float(c), float(v))
         cursor = chunk_start
-        time.sleep(0.25)  # не упираемся в rate limit
+        time.sleep(0.25)  # stay under the rate limit
     return [rows[t] for t in sorted(rows) if start <= t < end]
 
 
@@ -44,7 +44,7 @@ FUTURES_PER_REQUEST = 200
 
 
 def fetch_futures_candles(symbol, start, end):
-    """Часовые свечи бессрочного фьючерса (по ним KuCoin ближе всего к цене ликвидации)."""
+    """Hourly perpetual futures candles (closest to what KuCoin uses for liquidation)."""
     rows = {}
     cursor = start
     while cursor < end:
@@ -54,7 +54,7 @@ def fetch_futures_candles(symbol, start, end):
             body = json.load(resp)
         if body.get("code") != "200000":
             raise RuntimeError(f"KuCoin Futures API error: {body}")
-        # формат: [time_ms, open, high, low, close, volume, ...]
+        # format: [time_ms, open, high, low, close, volume, ...]
         for r in body["data"] or []:
             t, o, h, l, c, v = r[:6]
             t //= 1000
@@ -75,16 +75,16 @@ def _cached(path, fetch):
 
 
 def load_candles(symbol="BTC-USDT", interval="1hour", days=180):
-    """Свечи за последние `days` дней, с кэшем в CSV."""
+    """Candles for the last `days` days, cached in CSV."""
     os.makedirs(CACHE_DIR, exist_ok=True)
     step = INTERVALS[interval]
-    end = int(time.time()) // step * step  # только закрытые свечи
+    end = int(time.time()) // step * step  # closed candles only
     return _cached(os.path.join(CACHE_DIR, f"{symbol}_{interval}_{days}d.csv"),
                    lambda: fetch_candles(symbol, interval, end - days * 86400, end))
 
 
 def load_futures_candles(futures_symbol, days=365):
-    """Часовые свечи фьючерса (например XBTUSDTM) за последние `days` дней, с кэшем."""
+    """Hourly futures candles (e.g. XBTUSDTM) for the last `days` days, cached."""
     os.makedirs(CACHE_DIR, exist_ok=True)
     end = int(time.time()) // 3600 * 3600
     return _cached(os.path.join(CACHE_DIR, f"fut_{futures_symbol}_1hour_{days}d.csv"),

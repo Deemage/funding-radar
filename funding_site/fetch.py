@@ -1,4 +1,4 @@
-"""Сбор данных со всех бирж: текущий фандинг, история за N дней, сводка по монетам."""
+"""Data collection from all exchanges: current funding, N-day history, per-coin summary."""
 import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
@@ -7,18 +7,18 @@ from exchanges import ALL
 
 
 def apr(hist, start, end, interval_h):
-    """Годовые по факту выплат: сумма ставок за период, пересчитанная на год.
-    Не зависит от интервала — биржи иногда меняют его (8ч → 4ч → 1ч), и средняя ставка × текущий интервал врёт."""
+    """APR from actual payments: sum of rates over the period, annualized.
+    Independent of the interval: exchanges sometimes change it (8h → 4h → 1h), so mean rate × current interval is wrong."""
     rates = [r for t, r in hist if t >= start]
     if not rates:
         return None
     first = min(t for t, _ in hist if t >= start)
-    span_days = min(end - start, end - first + interval_h * 3600) / 86400  # молодая монета — по фактической истории
+    span_days = min(end - start, end - first + interval_h * 3600) / 86400  # young coin: use its actual history
     return sum(rates) * 365 / span_days * 100
 
 
 def enrich(m, start, end):
-    """Метрики рынка по его истории (m["history"])."""
+    """Market metrics from its history (m["history"])."""
     hist = m["history"]
     rates = [r for _, r in hist]
     m["apr_7d"] = apr(hist, end - 7 * 86400, end, m["interval_h"])
@@ -27,7 +27,7 @@ def enrich(m, start, end):
 
 
 def summarize(base, markets):
-    """Сводка по монете: лучшая биржа для хеджа, межбиржевой спред, возраст и риск."""
+    """Coin summary: best exchange to hedge on, cross-exchange spread, age and risk."""
     markets = {k: m for k, m in markets.items() if m.get("apr_7d") is not None}
     if not markets:
         return None
@@ -45,7 +45,7 @@ def summarize(base, markets):
         "base": base,
         "markets": markets,
         "turnover": sum(m["turnover"] for m in markets.values()),
-        "age_days": max(ages) if ages else None,  # возраст самого старого рынка = возраст монеты
+        "age_days": max(ages) if ages else None,  # age of the oldest market = age of the coin
         "high_mm": bool(mms) and max(mms) >= 0.02,
         "best": best["exchange"] if best else None,
         "best_apr_7d": best["apr_7d"] if best else None,
@@ -58,7 +58,7 @@ def _load_markets(ex, log):
         ms = ex.markets()
         log(f"{ex.name}: {len(ms)} фьючерсов")
         return ms
-    except Exception as e:  # биржа недоступна (например, блок по региону) — сайт собирается без неё
+    except Exception as e:  # exchange unavailable (e.g. region block): build the site without it
         log(f"{ex.name}: недоступна ({e})")
         return []
 

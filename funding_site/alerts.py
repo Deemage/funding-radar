@@ -1,11 +1,11 @@
-"""Сводка в Telegram-канал по данным последней сборки (data.json).
+"""Telegram channel digest built from the latest build data (data.json).
 
-  python alerts.py --dry     # показать сообщение, ничего не отправляя
-  python alerts.py           # отправить, если сейчас час из TELEGRAM_POST_HOURS_UTC
-  python alerts.py --force   # отправить в любом случае
+  python alerts.py --dry     # print the message without sending
+  python alerts.py           # send if the current hour is in TELEGRAM_POST_HOURS_UTC
+  python alerts.py --force   # send regardless of the hour
 
-Токен бота и id канала берутся из переменных окружения TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID.
-Бота создаёшь сам через @BotFather и добавляешь администратором в свой канал.
+Bot token and channel id come from the TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID environment variables.
+Create the bot yourself via @BotFather and add it as an admin to your channel.
 """
 import argparse
 import html

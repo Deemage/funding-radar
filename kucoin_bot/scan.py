@@ -1,10 +1,10 @@
-"""Сканер фандинг-арбитража по всем ликвидным фьючерсам KuCoin.
+"""Funding arbitrage scanner across all liquid KuCoin futures.
 
-Честная проверка: монеты отбираются по фандингу первого полугодия,
-а доход стратегии считается только на втором (которое отбор «не видел»).
+Honest test: coins are selected by first-half-year funding,
+and strategy returns are measured only on the second half (unseen by the selection).
 
-Примеры:
-  python scan.py                         # топ-40 по обороту, история 365 дней
+Examples:
+  python scan.py                         # top 40 by turnover, 365 days of history
   python scan.py --top 60 --min-turnover 3
 """
 import argparse
@@ -27,7 +27,7 @@ def get_json(url):
 
 
 def liquid_pairs(top, min_turnover):
-    """Бессрочные USDT-фьючерсы, у которых есть такая же пара на споте, по убыванию оборота."""
+    """USDT perpetuals that also have a matching spot pair, by turnover descending."""
     spot = {s["symbol"] for s in get_json(SPOT_SYMBOLS) if s["enableTrading"]}
     pairs = []
     for c in get_json(CONTRACTS):
@@ -91,14 +91,14 @@ def main():
     for i, (sym, _, mm, _) in enumerate(pairs, 1):
         try:
             r = scan_one(sym, mm, args)
-        except Exception as e:  # одна битая монета не должна валить весь скан
+        except Exception as e:  # one broken coin shouldn't kill the whole scan
             print(f"  [{i}/{len(pairs)}] {sym}: ошибка {e}", flush=True)
             continue
         print(f"  [{i}/{len(pairs)}] {sym}: " + ("мало истории" if r is None else f"фандинг {r['apr_h1']:.1f}% → {r['apr_h2']:.1f}%"), flush=True)
         if r:
             rows.append(r)
 
-    # монеты без фандинга в 1-м полугодии (фьючерс появился позже) — в конец
+    # coins with no first-half funding (futures listed later) go last
     rows.sort(key=lambda r: -r["apr_h1"] if r["apr_h1"] == r["apr_h1"] else float("inf"))
     header = (f"\n{'Монета':<12} {'Дней':>5} {'Фанд.1п':>8} {'Фанд.2п':>8} {'Отр.2п':>7} "
               f"{'Арб 2п год.':>11} {'Просадка':>8} {'Ликв.':>5} {'Ребал.':>6} {'MM':>6}")

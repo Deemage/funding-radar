@@ -1,7 +1,7 @@
-"""Адаптеры бирж. Каждый умеет две вещи:
-  markets()                    → список бессрочных USDT-фьючерсов в едином формате
-  history(symbol, start, end)  → [(time_sec, rate)] по возрастанию
-Все API публичные, ключи не нужны.
+"""Exchange adapters. Each one does two things:
+  markets()                    → list of USDT perpetuals in a common format
+  history(symbol, start, end)  → [(time_sec, rate)] in ascending order
+All APIs are public, no keys needed.
 """
 import json
 import time
@@ -59,7 +59,7 @@ class KuCoin:
         while cursor < end:
             chunk_end = min(end, cursor + window)
             rows = get(f"{self.API}/contract/funding-rates?symbol={symbol}&from={cursor * 1000}&to={chunk_end * 1000}")["data"] or []
-            if len(rows) >= 100 and window > 3600:  # лимит 100 записей — сужаем окно
+            if len(rows) >= 100 and window > 3600:  # 100-row limit, so narrow the window
                 window //= 2
                 continue
             for r in rows:
@@ -133,5 +133,5 @@ class Gate:
         return sorted((int(r["t"]), float(r["r"])) for r in rows)
 
 
-# Bybit не подключён: его API отвечает 403 на запросы с серверов GitHub Actions.
+# Bybit is not included: its API returns 403 to requests from GitHub Actions servers.
 ALL = [KuCoin(), OKX(), Gate()]
